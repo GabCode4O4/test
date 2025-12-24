@@ -1,0 +1,6 @@
+0;Algorithmique;0
+1;Bases de Données;0
+2;Développement Web;0
+3;Analyse;1
+4;Algèbre;1
+5;Mécanique;2

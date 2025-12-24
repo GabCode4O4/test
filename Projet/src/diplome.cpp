@@ -25,3 +25,8 @@ float Diplome::getCoutTotal() const {
     }
     return total;
 }
+
+std::ostream& operator<<(std::ostream& os, const Diplome& diplome) {
+    os << "Diplome: " << diplome.getNom();
+    return os;
+}

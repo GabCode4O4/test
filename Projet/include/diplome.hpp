@@ -21,6 +21,8 @@ public:
     void addSemestre();
     void addSemestre(const string& p_nom);
     float getCoutTotal() const;
+
+    friend std::ostream& operator<<(std::ostream& os, const Diplome& diplome);
 };
 
 

@@ -18,7 +18,7 @@ protected:
 
 public:
     Enseignant(const string& p_nom, const string& p_prenom);
-    ~Enseignant() = default;
+    virtual ~Enseignant() = default;
 
     inline int getId() const { return id; }
     inline const Departement * getDepartement() const { return departement; } 

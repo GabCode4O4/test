@@ -1,6 +1,14 @@
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <map>
+#include <limits>
+#include <algorithm>
 #include <iomanip>
+#include <functional> // Pour std::function
 
+// Includes du projet
 #include "departement.hpp"
 #include "ue.hpp"
 #include "enseignement.hpp"
@@ -12,378 +20,613 @@
 
 using namespace std;
 
-void afficherSeparateur(const string& titre) {
-    cout << "\n" << string(60, '=') << endl;
-    cout << "  " << titre << endl;
-    cout << string(60, '=') << endl;
+// --- UTILITAIRES ---
+void viderBuffer() {
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 }
 
-void testDepartement() {
-    afficherSeparateur("TEST DEPARTEMENT");
-    
-    Departement* dept = new Departement("Informatique");
-    cout << "Département créé: " << dept->getNom() << " (ID: " << dept->getId() << ")" << endl;
-    
-    cout << "\n--- Ajout d'enseignants ---" << endl;
-    EnseignantChercheur* prof1 = new EnseignantChercheur("Dupont", "Jean");
-    EnseignantChercheur* prof2 = new EnseignantChercheur("Martin", "Sophie");
-    AutreEnseignant* prof3 = new AutreEnseignant("Bernard", "Luc");
-    
-    dept->addEnseignant(prof1);
-    dept->addEnseignant(prof2);
-    dept->addEnseignant(prof3);
-    
-    cout << "Nombre d'enseignants: " << dept->getEnseignants().size() << endl;
-    cout << "\nListe des enseignants:" << endl;
-    for (const auto& ens : dept->getEnseignants()) {
-        cout << "  - " << ens->toString() << " (ETD Max: " << ens->getETDMax() << "h)" << endl;
+void afficherTitre(const string& titre) {
+    cout << "\n==========================================" << endl;
+    cout << "   " << titre << endl;
+    cout << "==========================================" << endl;
+}
+
+// --- FONCTION GÉNÉRIQUE (TEMPLATE) D'AFFICHAGE ---
+// Affiche n'importe quel vecteur de pointeurs T*
+// Accepte un filtre optionnel (lambda)
+template<typename T>
+void afficherListeGenerique(const string& titre, const vector<T*>& liste, function<bool(const T*)> filtre = nullptr) {
+    afficherTitre(titre);
+    if(liste.empty()) {
+        cout << "  (Liste vide)" << endl;
+        return;
     }
-    
-    cout << "\n" << *dept << endl;
-    
-    delete dept;
-}
 
-void testEnseignants() {
-    afficherSeparateur("TEST ENSEIGNANTS");
-    
-    Departement* dept = new Departement("Mathématiques");
-    
-    EnseignantChercheur* ec = new EnseignantChercheur("Conchon", "Emmanuel");
-    AutreEnseignant* ae = new AutreEnseignant("Maria", "Maxime");
-    
-    dept->addEnseignant(ec);
-    dept->addEnseignant(ae);
-    
-    cout << "Enseignant Chercheur:" << endl;
-    cout << "  " << *ec << endl;
-    cout << "  ETD Max: " << ec->getETDMax() << "h" << endl;
-    cout << "  ETD Réalisé: " << ec->getETDRealise() << "h" << endl;
-    
-    cout << "\nAutre Enseignant (PRAG/PRCE):" << endl;
-    cout << "  " << *ae << endl;
-    cout << "  ETD Max: " << ae->getETDMax() << "h" << endl;
-    cout << "  ETD Réalisé: " << ae->getETDRealise() << "h" << endl;
-    
-    delete dept;
-}
-
-void testUEetEnseignements() {
-    afficherSeparateur("TEST UE ET ENSEIGNEMENTS");
-    
-    Departement* dept = new Departement("Informatique");
-    EnseignantChercheur* responsable = new EnseignantChercheur("Dupuis", "Marie");
-    dept->addEnseignant(responsable);
-    
-    UE* ue = new UE("Bases de Données Relationnelles", dept, responsable);
-    dept->addUE(ue);
-    
-    cout << "UE créée: " << ue->getNom() << " (ID: " << ue->getId() << ")" << endl;
-    cout << "Responsable: " << responsable->getNom() << endl;
-    
-    cout << "\n--- Ajout d'enseignements ---" << endl;
-    Enseignement* cours = new Enseignement(1, 20.0f, COURS);
-    Enseignement* td = new Enseignement(2, 15.0f, TD);
-    Enseignement* tp = new Enseignement(4, 12.0f, TP);
-    
-    ue->addEnseignement(cours);
-    ue->addEnseignement(td);
-    ue->addEnseignement(tp);
-    
-    cout << "Cours: " << *cours << endl;
-    cout << "TD: " << *td << endl;
-    cout << "TP: " << *tp << endl;
-    
-    cout << "\nETD total de l'UE: " << ue->getETD() << "h" << endl;
-    
-    cout << "\n--- Ajout d'inscrits ---" << endl;
-    ue->ajouterInscrits(50);
-    cout << "Nombre d'inscrits: " << ue->getNbTotalInscrits() << endl;
-    
-    cout << "\n" << *ue << endl;
-    
-    delete dept;
-}
-
-void testInterventions() {
-    afficherSeparateur("TEST INTERVENTIONS");
-    
-    Departement* dept = new Departement("Informatique");
-    EnseignantChercheur* responsable = new EnseignantChercheur("Leclerc", "Paul");
-    EnseignantChercheur* intervenant1 = new EnseignantChercheur("Rousseau", "Claire");
-    AutreEnseignant* intervenant2 = new AutreEnseignant("Moreau", "Pierre");
-    
-    dept->addEnseignant(responsable);
-    dept->addEnseignant(intervenant1);
-    dept->addEnseignant(intervenant2);
-    
-    UE* ue = new UE("Programmation Orientée Objet", dept, responsable);
-    dept->addUE(ue);
-    
-    Enseignement* cours = new Enseignement(1, 24.0f, COURS);
-    Enseignement* td = new Enseignement(3, 18.0f, TD);
-    Enseignement* tp = new Enseignement(6, 20.0f, TP);
-    
-    ue->addEnseignement(cours);
-    ue->addEnseignement(td);
-    ue->addEnseignement(tp);
-    
-    cout << "--- Création d'interventions ---" << endl;
-    Intervention* int1 = new Intervention(responsable, ue, 10.0f, 8.0f, 12.0f);
-    Intervention* int2 = new Intervention(intervenant1, ue, 10.0f, 10.0f, 12.0f);
-    Intervention* int3 = new Intervention(intervenant2, ue, 0.0f, 0.0f, 0.0f);
-    
-    
-    cout << "Intervention 1 - ETD: " << int1->getETD() << "h" << endl;
-    cout << "Intervention 2 - ETD: " << int2->getETD() << "h" << endl;
-    cout << "Intervention 3 - ETD: " << int3->getETD() << "h" << endl;
-    
-    cout << "\n--- Charge de travail des enseignants ---" << endl;
-    cout << responsable->getNom() << " - ETD réalisé: " << responsable->getETDRealise() 
-         << "h / " << responsable->getETDMax() << "h" << endl;
-    cout << intervenant1->getNom() << " - ETD réalisé: " << intervenant1->getETDRealise() 
-         << "h / " << intervenant1->getETDMax() << "h" << endl;
-    cout << intervenant2->getNom() << " - ETD réalisé: " << intervenant2->getETDRealise() 
-         << "h / " << intervenant2->getETDMax() << "h" << endl;
-    
-    delete dept;
-}
-
-void testDiplomeEtSemestre() {
-    afficherSeparateur("TEST DIPLOME ET SEMESTRE");
-    
-    Departement* dept = new Departement("Informatique");
-    
-    EnseignantChercheur* resp1 = new EnseignantChercheur("Durand", "Alice");
-    EnseignantChercheur* resp2 = new EnseignantChercheur("Petit", "Bob");
-    EnseignantChercheur* resp3 = new EnseignantChercheur("Roux", "Charlie");
-    
-    dept->addEnseignant(resp1);
-    dept->addEnseignant(resp2);
-    dept->addEnseignant(resp3);
-    
-    Diplome* licence = new Diplome("Licence Informatique");
-    
-    cout << "Diplôme créé: Licence Informatique" << endl;
-    
-    cout << "\n--- Création des semestres ---" << endl;
-    
-    licence->addSemestre("Semestre 1");
-    licence->addSemestre("Semestre 2");
-
-    Semestre* s1 = const_cast<Semestre*>(licence->getSemestre(1));
-    Semestre* s2 = const_cast<Semestre*>(licence->getSemestre(2));
-
-
-    cout << "Semestre 1 et 2 ajoutés au diplôme" << endl;
-    
-    cout << "\n--- Création des UE pour S1 ---" << endl;
-    UE* ue1 = new UE("Algorithmique", dept, resp1);
-    UE* ue2 = new UE("Mathématiques", dept, resp2);
-    
-    dept->addUE(ue1);
-    dept->addUE(ue2);
-    
-    Enseignement* cours1 = new Enseignement(1, 30.0f, COURS);
-    Enseignement* td1 = new Enseignement(2, 20.0f, TD);
-    ue1->addEnseignement(cours1);
-    ue1->addEnseignement(td1);
-    
-    Enseignement* cours2 = new Enseignement(1, 25.0f, COURS);
-    Enseignement* tp2 = new Enseignement(3, 15.0f, TP);
-    ue2->addEnseignement(cours2);
-    ue2->addEnseignement(tp2);
-    
-    s1->addUE(ue1, 60);
-    s1->addUE(ue2, 60);
-    
-    cout << "\n--- Création des UE pour S2 ---" << endl;
-    UE* ue3 = new UE("POO", dept, resp3);
-    dept->addUE(ue3);
-    
-    Enseignement* cours3 = new Enseignement(1, 28.0f, COURS);
-    Enseignement* tp3 = new Enseignement(4, 24.0f, TP);
-    ue3->addEnseignement(cours3);
-    ue3->addEnseignement(tp3);
-    
-    s2->addUE(ue3, 58);
-    
-    cout << "\nCoût horaire S1: " << s1->getCoutHoraires() << "h" << endl;
-    cout << "Coût horaire S2: " << s2->getCoutHoraires() << "h" << endl;
-    cout << "Coût total du diplôme: " << licence->getCoutTotal() << "h" << endl;
-    
-    delete licence;
-    delete dept;
-}
-
-void testTauxEncadrement() {
-    afficherSeparateur("TEST TAUX D'ENCADREMENT");
-    
-    Departement* dept = new Departement("Sciences");
-    
-    EnseignantChercheur* prof1 = new EnseignantChercheur("Einstein", "Albert");
-    EnseignantChercheur* prof2 = new EnseignantChercheur("Curie", "Marie");
-    AutreEnseignant* prof3 = new AutreEnseignant("Newton", "Isaac");
-    
-    dept->addEnseignant(prof1);
-    dept->addEnseignant(prof2);
-    dept->addEnseignant(prof3);
-    
-    UE* ue1 = new UE("Physique Quantique", dept, prof1);
-    UE* ue2 = new UE("Chimie Générale", dept, prof2);
-    
-    dept->addUE(ue1);
-    dept->addUE(ue2);
-    
-    Enseignement* cours1 = new Enseignement(1, 30.0f, COURS);
-    Enseignement* tp1 = new Enseignement(3, 20.0f, TP);
-    ue1->addEnseignement(cours1);
-    ue1->addEnseignement(tp1);
-    
-    Enseignement* cours2 = new Enseignement(1, 25.0f, COURS);
-    Enseignement* td2 = new Enseignement(2, 18.0f, TD);
-    ue2->addEnseignement(cours2);
-    ue2->addEnseignement(td2);
-    
-    Intervention* int1 = new Intervention(prof1, ue1, 20.0f, 0.0f, 30.0f);
-    Intervention* int2 = new Intervention(prof2, ue2, 0.0f, 18.0f, 25.0f);
-    Intervention* int3 = new Intervention(prof3, ue1, 0.0f, 0.0f, 0.0f);
-    
-  
-    cout << "Taux d'encadrement du département: " << fixed << setprecision(2) 
-         << dept->getTauxEncadrement() * 100 << "%" << endl;
-    
-    cout << "\nDétail des enseignants:" << endl;
-    for (const auto& ens : dept->getEnseignants()) {
-        float taux = (ens->getETDMax() > 0) ? (ens->getETDRealise() / ens->getETDMax()) * 100 : 0;
-        cout << "  " << ens->getNom() << ": " << ens->getETDRealise() << "h / " 
-             << ens->getETDMax() << "h (" << fixed << setprecision(1) << taux << "%)" << endl;
+    bool elementTrouve = false;
+    for(const auto* elem : liste) {
+        // Si filtre est null OU si le filtre renvoie true
+        if(!filtre || filtre(elem)) {
+            cout << *elem << endl; // Utilise operator<< de l'objet
+            cout << "-----------------------------------" << endl;
+            elementTrouve = true;
+        }
     }
-    
-    delete dept;
+
+    if(!elementTrouve && filtre) {
+        cout << "  (Aucun élément ne correspond au filtre)" << endl;
+    }
 }
 
-void testComplet() {
-    afficherSeparateur("TEST COMPLET DU SYSTÈME");
-    
-    cout << "Création d'un système de gestion universitaire complet..." << endl;
-    
-    // Création du département
-    Departement* deptInfo = new Departement("Informatique");
-    
-    // Création des enseignants
-    EnseignantChercheur* conchon = new EnseignantChercheur("Conchon", "Emmanuel");
-    EnseignantChercheur* maria = new EnseignantChercheur("Maria", "Maxime");
-    AutreEnseignant* dupont = new AutreEnseignant("Dupont", "Jean");
-    
-    deptInfo->addEnseignant(conchon);
-    deptInfo->addEnseignant(maria);
-    deptInfo->addEnseignant(dupont);
-    
-    // Création du diplôme
-    Diplome* master = new Diplome("Master Informatique");
-    
-    // Création des semestres
-    master->addSemestre("M1 - Semestre 1");
-    master->addSemestre("M1 - Semestre 2");
+// --- CLASSE PRINCIPALE ---
+class GestionFaculte {
+private:
+    vector<Departement*> departements;
+    vector<Enseignant*> enseignants;
+    vector<UE*> ues;
+    vector<Diplome*> diplomes;
 
-    Semestre* s1 = master->getSemestre(1);
-    Semestre* s2 = master->getSemestre(2);
+    // Maps pour la reconstruction des liens lors du chargement
+    map<int, Departement*> mapDept;
+    map<int, Enseignant*> mapEns;
+    map<int, UE*> mapUE;
 
-    // Création des UE
-    UE* bdr = new UE("Bases de Données Relationnelles", deptInfo, conchon);
-    UE* poo = new UE("Programmation Orientée Objet", deptInfo, maria);
-    UE* algo = new UE("Algorithmique Avancée", deptInfo, dupont);
+public:
+    GestionFaculte() {}
     
-    deptInfo->addUE(bdr);
-    deptInfo->addUE(poo);
-    deptInfo->addUE(algo);
-    
-    // Enseignements pour BDR
-    Enseignement* bdr_cours = new Enseignement(1, 24.0f, COURS);
-    Enseignement* bdr_td = new Enseignement(2, 18.0f, TD);
-    Enseignement* bdr_tp = new Enseignement(4, 20.0f, TP);
-    
-    bdr->addEnseignement(bdr_cours);
-    bdr->addEnseignement(bdr_td);
-    bdr->addEnseignement(bdr_tp);
-    
-    // Enseignements pour POO
-    Enseignement* poo_cours = new Enseignement(1, 20.0f, COURS);
-    Enseignement* poo_tp = new Enseignement(3, 25.0f, TP);
-    
-    poo->addEnseignement(poo_cours);
-    poo->addEnseignement(poo_tp);
-    
-    // Enseignements pour Algo
-    Enseignement* algo_cours = new Enseignement(1, 22.0f, COURS);
-    Enseignement* algo_td = new Enseignement(2, 16.0f, TD);
-    
-    algo->addEnseignement(algo_cours);
-    algo->addEnseignement(algo_td);
-    
-    // Ajout des UE aux semestres
-    s1->addUE(bdr, 45);
-    s1->addUE(poo, 45);
-    s2->addUE(algo, 42);
-    
-    // Création des interventions
-    Intervention* int1 = new Intervention(conchon, bdr, 20.0f, 18.0f, 24.0f);
-    Intervention* int2 = new Intervention(maria, poo, 25.0f, 0.0f, 20.0f);
-    Intervention* int3 = new Intervention(dupont, algo, 0.0f, 16.0f, 22.0f);
-    
-    
-    // Affichage des résultats
-    cout << "\n" << *deptInfo << endl;
-    
-    cout << "\n--- Détail des UE ---" << endl;
-    for (const auto& ue : deptInfo->getUEs()) {
-        cout << *ue << endl;
+    ~GestionFaculte() {
+        // Note: Dans un vrai projet, gérer la suppression mémoire ici
     }
+
+    // =========================================================
+    //              1. GESTION DE LA PERSISTANCE (ROBUSTE)
+    // =========================================================
     
-    cout << "\n--- Coûts horaires ---" << endl;
-    cout << "Semestre 1: " << s1->getCoutHoraires() << "h" << endl;
-    cout << "Semestre 2: " << s2->getCoutHoraires() << "h" << endl;
-    cout << "Total diplôme: " << master->getCoutTotal() << "h" << endl;
-    
-    cout << "\n--- Taux d'encadrement ---" << endl;
-    cout << "Département: " << fixed << setprecision(2) 
-         << deptInfo->getTauxEncadrement() * 100 << "%" << endl;
-    
-    cout << "\n--- Charge de travail des enseignants ---" << endl;
-    for (const auto& ens : deptInfo->getEnseignants()) {
-        float taux = (ens->getETDMax() > 0) ? (ens->getETDRealise() / ens->getETDMax()) * 100 : 0;
-        cout << ens->toString() << endl;
-        cout << "  ETD: " << ens->getETDRealise() << "h / " << ens->getETDMax() 
-             << "h (" << fixed << setprecision(1) << taux << "%)" << endl;
+    void sauvegarderTout() {
+        afficherTitre("SAUVEGARDE EN COURS");
+        
+        // 1. Départements
+        ofstream fDept("departements.txt");
+        if(fDept.is_open()) {
+            for(auto* d : departements) fDept << d->getId() << ";" << d->getNom() << endl;
+        }
+
+        // 2. Enseignants
+        ofstream fEns("enseignants.txt");
+        if(fEns.is_open()) {
+            for(auto* e : enseignants) {
+                int type = (dynamic_cast<EnseignantChercheur*>(e)) ? 1 : 2;
+                int deptId = (e->getDepartement()) ? e->getDepartement()->getId() : -1;
+                fEns << e->getId() << ";" << type << ";" << e->getNom() << ";" << e->toString() << ";" << deptId << endl;
+            }
+        }
+
+        // 3. UEs
+        ofstream fUE("ues.txt");
+        if(fUE.is_open()) {
+            for(auto* u : ues) {
+                int deptId = (u->getDepartement()) ? u->getDepartement()->getId() : -1;
+                fUE << u->getId() << ";" << u->getNom() << ";" << deptId << endl;
+            }
+        }
+
+        // 4. Diplômes
+        ofstream fDip("diplomes.txt");
+        if(fDip.is_open()) {
+            for(auto* d : diplomes) {
+                fDip << d->getNom() << endl;
+            }
+        }
+
+        cout << "✓ Données sauvegardées." << endl;
     }
+
+    void chargerTout() {
+        // Réinitialisation
+        departements.clear(); enseignants.clear(); ues.clear(); diplomes.clear();
+        mapDept.clear(); mapEns.clear(); mapUE.clear();
+
+        afficherTitre("CHARGEMENT DES DONNÉES");
+        string ligne;
+
+        // 1. Dept
+        ifstream fDept("departements.txt");
+        if(fDept.is_open()) {
+            while(getline(fDept, ligne)) {
+                if(ligne.empty() || ligne == "\r") continue; // Fix bug ligne vide
+                try {
+                    stringstream ss(ligne);
+                    string sId, sNom;
+                    getline(ss, sId, ';'); getline(ss, sNom, ';');
+                    Departement* d = new Departement(sNom);
+                    departements.push_back(d);
+                    mapDept[stoi(sId)] = d;
+                } catch(...) {}
+            }
+        }
+
+        // 2. Enseignants
+        ifstream fEns("enseignants.txt");
+        if(fEns.is_open()) {
+            while(getline(fEns, ligne)) {
+                if(ligne.empty() || ligne == "\r") continue;
+                try {
+                    stringstream ss(ligne);
+                    string sId, sType, sNom, sPrenom, sDeptId;
+                    getline(ss, sId, ';'); getline(ss, sType, ';'); getline(ss, sNom, ';'); getline(ss, sPrenom, ';'); getline(ss, sDeptId, ';');
+                    
+                    Enseignant* e = (stoi(sType) == 1) ? (Enseignant*)new EnseignantChercheur(sNom, sPrenom) : (Enseignant*)new AutreEnseignant(sNom, sPrenom);
+                    enseignants.push_back(e);
+                    mapEns[stoi(sId)] = e;
+                    
+                    int dId = stoi(sDeptId);
+                    if(mapDept.count(dId)) mapDept[dId]->addEnseignant(e);
+                } catch(...) {}
+            }
+        }
+
+        // 3. UEs
+        ifstream fUE("ues.txt");
+        if(fUE.is_open()) {
+            while(getline(fUE, ligne)) {
+                if(ligne.empty() || ligne == "\r") continue;
+                try {
+                    stringstream ss(ligne);
+                    string sId, sNom, sDeptId;
+                    getline(ss, sId, ';'); getline(ss, sNom, ';'); getline(ss, sDeptId, ';');
+                    
+                    // Responsable par défaut si non trouvé (simplification pour l'exercice)
+                    Enseignant* resp = (!enseignants.empty()) ? enseignants[0] : nullptr;
+                    if(resp) {
+                        UE* ue = new UE(sNom, resp);
+                        ues.push_back(ue);
+                        mapUE[stoi(sId)] = ue;
+                    }
+                } catch(...) {}
+            }
+        }
+        
+        // 4. Diplômes
+        ifstream fDip("diplomes.txt");
+        if(fDip.is_open()) {
+            while(getline(fDip, ligne)) {
+                if(!ligne.empty() && ligne != "\r") diplomes.push_back(new Diplome(ligne));
+            }
+        }
+
+        cout << "✓ Données chargées avec succès." << endl;
+    }
+
+
+    // =========================================================
+    //              2. MENUS INTERACTIFS
+    // =========================================================
+
+    void demo() {
+        afficherTitre("INITIALISATION DE LA DÉMONSTRATION");
+
+        // 1. Création des Départements
+        Departement* deptInfo = new Departement("Informatique");
+        Departement* deptMath = new Departement("Mathématiques");
+        Departement* deptPhys = new Departement("Physique");
+        departements.push_back(deptInfo);
+        departements.push_back(deptMath);
+        departements.push_back(deptPhys);
+        cout << "-> 3 Départements créés." << endl;
+
+        // 2. Création des Enseignants
+        // Informatique
+        Enseignant* profTuring = new EnseignantChercheur("Turing", "Alan");
+        Enseignant* profLovelace = new EnseignantChercheur("Lovelace", "Ada");
+        Enseignant* profHopper = new AutreEnseignant("Hopper", "Grace");
+        deptInfo->addEnseignant(profTuring);
+        deptInfo->addEnseignant(profLovelace);
+        deptInfo->addEnseignant(profHopper);
+        enseignants.push_back(profTuring);
+        enseignants.push_back(profLovelace);
+        enseignants.push_back(profHopper);
+
+        // Mathématiques
+        Enseignant* profEuler = new EnseignantChercheur("Euler", "Leonhard");
+        Enseignant* profGauss = new AutreEnseignant("Gauss", "Carl");
+        deptMath->addEnseignant(profEuler);
+        deptMath->addEnseignant(profGauss);
+        enseignants.push_back(profEuler);
+        enseignants.push_back(profGauss);
+
+        // Physique
+        Enseignant* profEinstein = new EnseignantChercheur("Einstein", "Albert");
+        Enseignant* profCurie = new EnseignantChercheur("Curie", "Marie");
+        deptPhys->addEnseignant(profEinstein);
+        deptPhys->addEnseignant(profCurie);
+        enseignants.push_back(profEinstein);
+        enseignants.push_back(profCurie);
+        cout << "-> 7 Enseignants créés et affectés." << endl;
+
+        // 3. Création des UEs
+        // Info
+        UE* ueAlgo = new UE("Algorithmique", profTuring);
+        ueAlgo->setDepartement(deptInfo);
+        deptInfo->addUE(ueAlgo);
+        // 1 groupe de CM, 4 groupes de TD, 6 groupes de TP
+        ueAlgo->addEnseignement(new Enseignement(1, 20, COURS));
+        ueAlgo->addEnseignement(new Enseignement(4, 30, TD));
+        ueAlgo->addEnseignement(new Enseignement(6, 15, TP));
+        ues.push_back(ueAlgo);
+
+        UE* ueBDD = new UE("Bases de Données", profLovelace);
+        ueBDD->setDepartement(deptInfo);
+        deptInfo->addUE(ueBDD);
+        // 1 CM, 6 TP
+        ueBDD->addEnseignement(new Enseignement(1, 15, COURS));
+        ueBDD->addEnseignement(new Enseignement(6, 30, TP));
+        ues.push_back(ueBDD);
+
+        UE* ueWeb = new UE("Développement Web", profHopper);
+        ueWeb->setDepartement(deptInfo);
+        deptInfo->addUE(ueWeb);
+        // 1 CM, 4 TD, 6 TP
+        ueWeb->addEnseignement(new Enseignement(1, 10, COURS));
+        ueWeb->addEnseignement(new Enseignement(4, 20, TD));
+        ueWeb->addEnseignement(new Enseignement(6, 30, TP));
+        ues.push_back(ueWeb);
+
+        // Math
+        UE* ueAnalyse = new UE("Analyse", profEuler);
+        ueAnalyse->setDepartement(deptMath);
+        deptMath->addUE(ueAnalyse);
+        // 1 CM, 5 TD
+        ueAnalyse->addEnseignement(new Enseignement(1, 30, COURS));
+        ueAnalyse->addEnseignement(new Enseignement(5, 40, TD));
+        ues.push_back(ueAnalyse);
+
+        UE* ueAlgebra = new UE("Algèbre", profGauss);
+        ueAlgebra->setDepartement(deptMath);
+        deptMath->addUE(ueAlgebra);
+        // 1 CM, 5 TD
+        ueAlgebra->addEnseignement(new Enseignement(1, 25, COURS));
+        ueAlgebra->addEnseignement(new Enseignement(5, 35, TD));
+        ues.push_back(ueAlgebra);
+
+        // Physique
+        UE* ueMeca = new UE("Mécanique", profEinstein);
+        ueMeca->setDepartement(deptPhys);
+        deptPhys->addUE(ueMeca);
+        // 1 CM, 4 TD, 4 TP
+        ueMeca->addEnseignement(new Enseignement(1, 20, COURS));
+        ueMeca->addEnseignement(new Enseignement(4, 20, TD));
+        ueMeca->addEnseignement(new Enseignement(4, 10, TP));
+        ues.push_back(ueMeca);
+
+        cout << "-> 6 UEs créées avec leurs enseignements." << endl;
+
+        // 4. Création des Diplômes et Semestres
+        Diplome* licenceInfo = new Diplome("Licence Informatique");
+        licenceInfo->addSemestre("S1");
+        licenceInfo->addSemestre("S2");
+        licenceInfo->addSemestre("S3");
+        licenceInfo->addSemestre("S4");
+        licenceInfo->addSemestre("S5");
+        licenceInfo->addSemestre("S6");
+        
+        // Lier UEs aux semestres
+        licenceInfo->getSemestre(1)->addUE(ueAlgo, 50);
+        licenceInfo->getSemestre(1)->addUE(ueAnalyse, 50);
+        licenceInfo->getSemestre(2)->addUE(ueBDD, 45);
+        licenceInfo->getSemestre(2)->addUE(ueAlgebra, 45);
+        licenceInfo->getSemestre(3)->addUE(ueWeb, 40);
+        licenceInfo->getSemestre(3)->addUE(ueMeca, 40); // Un peu de physique en info pourquoi pas
+
+        diplomes.push_back(licenceInfo);
+
+        Diplome* masterData = new Diplome("Master Data Science");
+        masterData->addSemestre("M1 S1");
+        masterData->addSemestre("M1 S2");
+        masterData->getSemestre(1)->addUE(ueAlgo, 30); // Réutilisation d'UE (possible ?)
+        masterData->getSemestre(1)->addUE(ueBDD, 30);
+        
+        diplomes.push_back(masterData);
+        cout << "-> 2 Diplômes créés avec semestres et UEs." << endl;
+
+        // 5. Création des Interventions (Services)
+        // Turing fait du CM et TD en Algo
+        new Intervention(profTuring, ueAlgo, 0, 30, 20); 
+        // Lovelace fait du TP en Algo et tout BDD
+        new Intervention(profLovelace, ueAlgo, 15, 0, 0);
+        new Intervention(profLovelace, ueBDD, 30, 0, 15);
+        // Hopper fait du Web
+        new Intervention(profHopper, ueWeb, 30, 20, 10);
+        
+        cout << "-> Interventions générées." << endl;
+        cout << "Démonstration chargée avec succès !" << endl;
+    }
+
+    void menuPrincipal() {
+        int choix = -1;
+        while (choix != 0) {
+            cout << "\n==========================================" << endl;
+            cout << "      GESTION FACULTE - PROJET C++        " << endl;
+            cout << "==========================================" << endl;
+            cout << "1. Gestion RESSOURCES (Dépts, Profs, UEs)" << endl;
+            cout << "2. Gestion MAQUETTE (Diplômes, Semestres)" << endl;
+            cout << "3. Gestion SERVICES (Interventions)" << endl;
+            cout << "4. LISTES & AFFICHAGE (Visualiser)" << endl;
+            cout << "5. CALCULS & STATISTIQUES" << endl;
+            cout << "------------------------------------------" << endl;
+            cout << "7. Mode DÉMONSTRATION (Charger données test)" << endl;
+            cout << "8. Sauvegarder" << endl;
+            cout << "9. Charger" << endl;
+            cout << "0. Quitter" << endl;
+            cout << "Votre choix : "; 
+            
+            if(!(cin >> choix)) { cin.clear(); viderBuffer(); choix = -1; }
+            viderBuffer();
+
+            switch(choix) {
+                case 1: menuRessources(); break;
+                case 2: menuMaquette(); break;
+                case 3: uiAjouterIntervention(); break;
+                case 4: menuListes(); break;
+                case 5: menuCalculs(); break;
+                case 7: demo(); break;
+                case 8: sauvegarderTout(); break;
+                case 9: chargerTout(); break;
+                case 0: cout << "Au revoir." << endl; break;
+                default: cout << "Choix invalide." << endl;
+            }
+        }
+    }
+
+    void menuRessources() {
+        int choix = -1;
+        while(choix != 0) {
+            afficherTitre("GESTION RESSOURCES");
+            cout << "1. Créer un Département" << endl;
+            cout << "2. Créer un Enseignant" << endl;
+            cout << "3. Créer une UE (et ses enseignements)" << endl;
+            cout << "0. Retour" << endl;
+            cout << "Choix : "; cin >> choix; viderBuffer();
+            
+            switch(choix) {
+                case 1: uiCreerDepartement(); break;
+                case 2: uiCreerEnseignant(); break;
+                case 3: uiCreerUEComplet(); break;
+                case 0: break;
+            }
+        }
+    }
+
+    void menuMaquette() {
+        int choix = -1;
+        while(choix != 0) {
+            afficherTitre("GESTION MAQUETTE");
+            cout << "1. Créer un Diplôme" << endl;
+            cout << "2. Ajouter un Semestre à un Diplôme" << endl;
+            cout << "3. Inscrire une UE dans un Semestre" << endl;
+            cout << "0. Retour" << endl;
+            cout << "Choix : "; cin >> choix; viderBuffer();
+            
+            switch(choix) {
+                case 1: uiCreerDiplome(); break;
+                case 2: uiAjouterSemestre(); break;
+                case 3: uiLierUEaSemestre(); break;
+                case 0: break;
+            }
+        }
+    }
+
+    void menuListes() {
+        int choix = -1;
+        while(choix != 0) {
+            afficherTitre("FILTRES D'AFFICHAGE");
+            cout << "1. Départements" << endl;
+            cout << "2. Tous les Enseignants" << endl;
+            cout << "3. Enseignants Chercheurs uniquement" << endl;
+            cout << "4. Autre Enseignants uniquement" << endl;
+            cout << "5. UEs et volumes horaires" << endl;
+            cout << "6. Diplômes (Structure complète)" << endl;
+            cout << "0. Retour" << endl;
+            cout << "Choix : "; cin >> choix; viderBuffer();
+
+            switch(choix) {
+                case 1: afficherListeGenerique("DÉPARTEMENTS", departements); break;
+                case 2: afficherListeGenerique("TOUS LES ENSEIGNANTS", enseignants); break;
+                case 3: 
+                    // Utilisation d'une lambda pour filtrer
+                    afficherListeGenerique<Enseignant>("CHERCHEURS UNIQUEMENT", enseignants, 
+                        [](const Enseignant* e) { return dynamic_cast<const EnseignantChercheur*>(e) != nullptr; }); 
+                    break;
+                case 4: 
+                    afficherListeGenerique<Enseignant>("AUTRES ENSEIGNANTS", enseignants, 
+                        [](const Enseignant* e) { return dynamic_cast<const AutreEnseignant*>(e) != nullptr; }); 
+                    break;
+                case 5: afficherListeGenerique("UNITÉS D'ENSEIGNEMENT", ues); break;
+                case 6: afficherListeGenerique("DIPLÔMES", diplomes); break;
+                case 0: break;
+            }
+        }
+    }
+
+    void menuCalculs() {
+        int choix = -1;
+        while(choix != 0) {
+            afficherTitre("CALCULS & STATS");
+            cout << "1. Charges Enseignants (Service vs Obligations)" << endl;
+            cout << "2. Coûts des Diplômes" << endl;
+            cout << "3. Taux d'encadrement des Départements" << endl;
+            cout << "0. Retour" << endl;
+            cout << "Choix : "; cin >> choix; viderBuffer();
+            
+            if(choix == 1) uiCalculChargeEns();
+            else if(choix == 2) uiCalculCoutDiplome();
+            else if(choix == 3) uiCalculTauxEncadrement();
+        }
+    }
+
+    // =========================================================
+    //              3. MÉTHODES DE CRÉATION UI
+    // =========================================================
+
+    void uiCreerDepartement() {
+        string nom;
+        cout << "Nom du département : "; getline(cin, nom);
+        departements.push_back(new Departement(nom));
+        cout << "Département créé." << endl;
+    }
+
+    void uiCreerEnseignant() {
+        if(departements.empty()) { cout << "Erreur: Créez un département d'abord." << endl; return; }
+        
+        string nom, prenom;
+        cout << "Nom : "; getline(cin, nom);
+        cout << "Prénom : "; getline(cin, prenom);
+        
+        cout << "Type (1=Chercheur [192h], 2=Autre [384h]) : "; 
+        int type; cin >> type; viderBuffer();
+        
+        cout << "Rattacher à quel département ?" << endl;
+        for(size_t i=0; i<departements.size(); ++i) cout << i << ". " << departements[i]->getNom() << endl;
+        int idx; cin >> idx; viderBuffer();
+
+        if(idx >= 0 && idx < departements.size()) {
+            Enseignant* e = (type == 1) ? (Enseignant*)new EnseignantChercheur(nom, prenom) : (Enseignant*)new AutreEnseignant(nom, prenom);
+            departements[idx]->addEnseignant(e);
+            enseignants.push_back(e);
+            cout << "Enseignant ajouté." << endl;
+        }
+    }
+
+    void uiCreerUEComplet() {
+        if(enseignants.empty()) { cout << "Erreur: Il faut des enseignants (responsables)." << endl; return; }
+
+        string nom;
+        cout << "Nom de l'UE : "; getline(cin, nom);
+        
+        cout << "Responsable de l'UE : " << endl;
+        for(size_t i=0; i<enseignants.size(); ++i) cout << i << ". " << enseignants[i]->getNom() << endl;
+        int idx; cin >> idx; viderBuffer();
+        
+        if(idx < 0 || idx >= enseignants.size()) return;
+
+        UE* ue = new UE(nom, enseignants[idx]);
+        
+        // Ajout des volumes horaires (Composition)
+        char continuer = 'o';
+        while(continuer == 'o') {
+            cout << "Ajouter un enseignement (Cours/TD/TP) ? (o/n) : "; cin >> continuer;
+            if(continuer == 'n') break;
+            
+            int type; float heures; int groupes;
+            cout << "Type (0=COURS, 1=TP, 2=TD) : "; cin >> type;
+            cout << "Volume horaire (heures) : "; cin >> heures;
+            cout << "Nombre de groupes : "; cin >> groupes;
+            
+            enseignement_t typeEnum = (type==0) ? COURS : (type==1 ? TP : TD);
+            ue->addEnseignement(new Enseignement(groupes, heures, typeEnum));
+        }
+
+        const_cast<Departement*>(ue->getDepartement())->addUE(ue);
+        ues.push_back(ue);
+        cout << "UE créée." << endl;
+    }
+
+    void uiCreerDiplome() {
+        string nom;
+        cout << "Nom du diplôme : "; getline(cin, nom);
+        diplomes.push_back(new Diplome(nom));
+        cout << "Diplôme créé." << endl;
+    }
+
+    void uiAjouterSemestre() {
+        if(diplomes.empty()) { cout << "Aucun diplôme disponible." << endl; return; }
+        
+        cout << "Choisir le diplôme :" << endl;
+        for(size_t i=0; i<diplomes.size(); ++i) cout << i << ". " << diplomes[i]->getNom() << endl;
+        int idx; cin >> idx; viderBuffer();
+        
+        if(idx >= 0 && idx < diplomes.size()) {
+            string nomSem;
+            cout << "Nom du semestre : "; getline(cin, nomSem);
+            diplomes[idx]->addSemestre(nomSem);
+            cout << "Semestre ajouté." << endl;
+        }
+    }
+
+    void uiLierUEaSemestre() {
+        // Logique UML : Diplôme -> Semestre -> UE
+        if(diplomes.empty() || ues.empty()) { cout << "Manque de Diplômes ou d'UEs." << endl; return; }
+
+        cout << "--- 1. Choisir Diplôme ---" << endl;
+        for(size_t i=0; i<diplomes.size(); ++i) cout << i << ". " << diplomes[i]->getNom() << endl;
+        int idxDip; cin >> idxDip; 
+        if(idxDip < 0 || idxDip >= diplomes.size()) return;
+        
+        Diplome* d = diplomes[idxDip];
+        if(d->getNbSemestres() == 0) { cout << "Ce diplôme n'a pas de semestre." << endl; return; }
+
+        cout << "--- 2. Choisir Semestre ---" << endl;
+        // Parcours manuel car getSemestre prend un ID 1-based
+        for(int i=1; i<=d->getNbSemestres(); ++i) {
+            cout << i << ". " << d->getSemestre(i)->getCoutHoraires() << "h ETD (Info cout)" << endl; 
+        }
+        int numSem; cin >> numSem;
+        Semestre* s = d->getSemestre(numSem);
+
+        cout << "--- 3. Choisir l'UE à inscrire ---" << endl;
+        for(size_t i=0; i<ues.size(); ++i) cout << i << ". " << ues[i]->getNom() << endl;
+        int idxUE; cin >> idxUE; 
+        
+        int nbEtudiants;
+        cout << "Nombre d'étudiants inscrits : "; cin >> nbEtudiants;
+
+        s->addUE(ues[idxUE], nbEtudiants);
+        cout << "Lien créé !" << endl;
+    }
+
+    void uiAjouterIntervention() {
+        if(ues.empty() || enseignants.empty()) { cout << "Données manquantes." << endl; return; }
+        
+        cout << "Enseignant : ";
+        for(size_t i=0; i<enseignants.size(); ++i) cout << i << ". " << enseignants[i]->getNom() << endl;
+        int idxEns; cin >> idxEns;
+
+        cout << "UE : ";
+        for(size_t i=0; i<ues.size(); ++i) cout << i << ". " << ues[i]->getNom() << endl;
+        int idxUE; cin >> idxUE;
+
+        float c, td, tp;
+        cout << "Heures Cours : "; cin >> c;
+        cout << "Heures TD : "; cin >> td;
+        cout << "Heures TP : "; cin >> tp;
+
+        new Intervention(enseignants[idxEns], ues[idxUE], tp, td, c);
+        cout << "Service ajouté." << endl;
+    }
+
+    // =========================================================
+    //              4. MÉTHODES DE CALCUL
+    // =========================================================
     
-    delete master;
-    delete deptInfo;
-}
+    void uiCalculChargeEns() {
+        for(const auto* e : enseignants) {
+            cout << e->getNom() << ": " << e->getETDRealise() << "h / " << e->getETDMax() << "h" << endl;
+        }
+    }
+
+    void uiCalculCoutDiplome() {
+        for(const auto* d : diplomes) {
+            cout << d->getNom() << " : " << d->getCoutTotal() << "h ETD Total." << endl;
+        }
+    }
+
+    void uiCalculTauxEncadrement() {
+        for(const auto* d : departements) {
+            cout << d->getNom() << " : " << fixed << setprecision(2) << (d->getTauxEncadrement()*100) << "%" << endl;
+        }
+    }
+};
 
 int main() {
-    cout << "\n";
-    cout << "╔════════════════════════════════════════════════════════════╗" << endl;
-    cout << "║   TESTS COMPLETS DU SYSTÈME DE GESTION UNIVERSITAIRE       ║" << endl;
-    cout << "╚════════════════════════════════════════════════════════════╝" << endl;
-    
-    try {
-        testDepartement();
-        testEnseignants();
-        testUEetEnseignements();
-        testInterventions();
-        testDiplomeEtSemestre();
-        testTauxEncadrement();
-        testComplet();
-        
-        afficherSeparateur("TOUS LES TESTS SONT TERMINÉS AVEC SUCCÈS");
-        cout << "\n✓ Tous les tests ont été exécutés sans erreur!\n" << endl;
-        
-    } catch (const exception& e) {
-        cerr << "\n❌ ERREUR: " << e.what() << endl;
-        return 1;
-    }
-    
+    GestionFaculte app;
+    app.menuPrincipal();
     return 0;
 }

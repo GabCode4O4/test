@@ -1,0 +1,28 @@
+0;1;Turing;Chercheur: Enseignant : 0
+Prenom -> Alan
+Nom -> Turing
+Departement -> Informatique;0
+1;1;Lovelace;Chercheur: Enseignant : 1
+Prenom -> Ada
+Nom -> Lovelace
+Departement -> Informatique;0
+2;2;Hopper;Autre (PRAG/PRCE): Enseignant : 2
+Prenom -> Grace
+Nom -> Hopper
+Departement -> Informatique;0
+3;1;Euler;Chercheur: Enseignant : 3
+Prenom -> Leonhard
+Nom -> Euler
+Departement -> Mathématiques;1
+4;2;Gauss;Autre (PRAG/PRCE): Enseignant : 4
+Prenom -> Carl
+Nom -> Gauss
+Departement -> Mathématiques;1
+5;1;Einstein;Chercheur: Enseignant : 5
+Prenom -> Albert
+Nom -> Einstein
+Departement -> Physique;2
+6;1;Curie;Chercheur: Enseignant : 6
+Prenom -> Marie
+Nom -> Curie
+Departement -> Physique;2
