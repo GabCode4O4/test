@@ -4,7 +4,7 @@
 
 using namespace std;
 
-Enseignant::Enseignant(const string& p_nom, const string& p_prenom) : nom(p_nom), prenom(p_prenom)
+Enseignant::Enseignant(const string& p_nom, const string& p_prenom, const string& p_adresse) : nom(p_nom), prenom(p_prenom), adresse(p_adresse)
 {
     static int count_id = 0;
     id = count_id++;
@@ -21,7 +21,8 @@ float Enseignant::getETDRealise() const{
 }
 
 const string& Enseignant::getNom() const {return nom;}
-
+const string& Enseignant::getPrenom() const {return prenom;}
+const string& Enseignant::getAdresse() const {return adresse;}
 void Enseignant::setDepartement(const Departement *p_departement){departement = p_departement;}
 
 string Enseignant::toString() const {

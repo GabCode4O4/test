@@ -96,7 +96,7 @@ public:
             for(auto* e : enseignants) {
                 int type = (dynamic_cast<EnseignantChercheur*>(e)) ? 1 : 2;
                 int deptId = (e->getDepartement()) ? e->getDepartement()->getId() : -1;
-                fEns << e->getId() << ";" << type << ";" << e->getNom() << ";" << e->toString() << ";" << deptId << endl;
+                fEns << e->getId() << ";" << type << ";" << e->getNom() << ";" << e->getPrenom() << ";" << e->getAdresse() << ";" << deptId << endl;
             }
         }
 
@@ -151,10 +151,10 @@ public:
                 if(ligne.empty() || ligne == "\r") continue;
                 try {
                     stringstream ss(ligne);
-                    string sId, sType, sNom, sPrenom, sDeptId;
-                    getline(ss, sId, ';'); getline(ss, sType, ';'); getline(ss, sNom, ';'); getline(ss, sPrenom, ';'); getline(ss, sDeptId, ';');
+                    string sId, sType, sNom, sPrenom, sAdresse, sDeptId;
+                    getline(ss, sId, ';'); getline(ss, sType, ';'); getline(ss, sNom, ';'); getline(ss, sPrenom, ';'); getline(ss, sAdresse, ';'); getline(ss, sDeptId, ';');
                     
-                    Enseignant* e = (stoi(sType) == 1) ? (Enseignant*)new EnseignantChercheur(sNom, sPrenom) : (Enseignant*)new AutreEnseignant(sNom, sPrenom);
+                    Enseignant* e = (stoi(sType) == 1) ? (Enseignant*)new EnseignantChercheur(sNom, sPrenom, sAdresse) : (Enseignant*)new AutreEnseignant(sNom, sPrenom, sAdresse);
                     enseignants.push_back(e);
                     mapEns[stoi(sId)] = e;
                     
@@ -215,9 +215,9 @@ public:
 
         // 2. Création des Enseignants
         // Informatique
-        Enseignant* profTuring = new EnseignantChercheur("Turing", "Alan");
-        Enseignant* profLovelace = new EnseignantChercheur("Lovelace", "Ada");
-        Enseignant* profHopper = new AutreEnseignant("Hopper", "Grace");
+        Enseignant* profTuring = new EnseignantChercheur("Turing", "Alan", "8 King's Parade, Cambridge");
+        Enseignant* profLovelace = new EnseignantChercheur("Lovelace", "Ada", "16 St. James Square, London");
+        Enseignant* profHopper = new AutreEnseignant("Hopper", "Grace", "55 Broadway, New York");
         deptInfo->addEnseignant(profTuring);
         deptInfo->addEnseignant(profLovelace);
         deptInfo->addEnseignant(profHopper);
@@ -226,16 +226,16 @@ public:
         enseignants.push_back(profHopper);
 
         // Mathématiques
-        Enseignant* profEuler = new EnseignantChercheur("Euler", "Leonhard");
-        Enseignant* profGauss = new AutreEnseignant("Gauss", "Carl");
+        Enseignant* profEuler = new EnseignantChercheur("Euler", "Leonhard", "Bern, Switzerland");
+        Enseignant* profGauss = new AutreEnseignant("Gauss", "Carl", " Braunschweig, Germany");
         deptMath->addEnseignant(profEuler);
         deptMath->addEnseignant(profGauss);
         enseignants.push_back(profEuler);
         enseignants.push_back(profGauss);
 
         // Physique
-        Enseignant* profEinstein = new EnseignantChercheur("Einstein", "Albert");
-        Enseignant* profCurie = new EnseignantChercheur("Curie", "Marie");
+        Enseignant* profEinstein = new EnseignantChercheur("Einstein", "Albert", "Ulm, Germany");
+        Enseignant* profCurie = new EnseignantChercheur("Curie", "Marie", "Paris, France");
         deptPhys->addEnseignant(profEinstein);
         deptPhys->addEnseignant(profCurie);
         enseignants.push_back(profEinstein);
@@ -476,9 +476,10 @@ public:
     void uiCreerEnseignant() {
         if(departements.empty()) { cout << "Erreur: Créez un département d'abord." << endl; return; }
         
-        string nom, prenom;
+        string nom, prenom, adresse;
         cout << "Nom : "; getline(cin, nom);
         cout << "Prénom : "; getline(cin, prenom);
+        cout << "Adresse : "; getline(cin, adresse);
         
         cout << "Type (1=Chercheur [192h], 2=Autre [384h]) : "; 
         int type; cin >> type; viderBuffer();
@@ -488,7 +489,7 @@ public:
         int idx; cin >> idx; viderBuffer();
 
         if(idx >= 0 && idx < departements.size()) {
-            Enseignant* e = (type == 1) ? (Enseignant*)new EnseignantChercheur(nom, prenom) : (Enseignant*)new AutreEnseignant(nom, prenom);
+            Enseignant* e = (type == 1) ? (Enseignant*)new EnseignantChercheur(nom, prenom, adresse) : (Enseignant*)new AutreEnseignant(nom, prenom, adresse);
             departements[idx]->addEnseignant(e);
             enseignants.push_back(e);
             cout << "Enseignant ajouté." << endl;

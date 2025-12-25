@@ -14,15 +14,18 @@ protected:
     int id;
     string nom;
     string prenom;
+    string adresse;
     const Departement * departement = nullptr;
 
 public:
-    Enseignant(const string& p_nom, const string& p_prenom);
+    Enseignant(const string& p_nom, const string& p_prenom, const string& p_adresse);
     virtual ~Enseignant() = default;
 
     inline int getId() const { return id; }
     inline const Departement * getDepartement() const { return departement; } 
     const string& getNom() const;
+    const string& getPrenom() const;
+    const string& getAdresse() const;
 
     float getETDRealise() const;
     virtual float getETDMax() const = 0;
