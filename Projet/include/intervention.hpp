@@ -6,6 +6,7 @@
 class UE; // class forward
 class Enseignant; // class forward
 
+using namespace std;
 /*
 * Une intervention concerne 1 Enseignant et 1 UE
 * Permet de garder une trace du nombre d'heure qu'a effectué le prof
@@ -14,7 +15,7 @@ class Enseignant; // class forward
 class Intervention
 {
 private:
-    static std::vector<Intervention *> interventions; // stock toutes les interventions déjà créées
+    static vector<Intervention *> interventions; // stock toutes les interventions déjà créées
     const Enseignant * intervenant; 
     const UE * ue;
     float nb_heure_tp, nb_heure_cours, nb_heure_td;
@@ -27,9 +28,9 @@ public:
     inline const UE * getUE() { return ue; }
     float getETD() const;
     // return un vector contenant les interventions faites par e
-    static std::vector<Intervention *> getInterventions(const Enseignant * e);
+    static vector<Intervention *> getInterventions(const Enseignant * e);
     // return un vector contenant les intervention faites dans l'ue
-    static std::vector<Intervention *> getInterventions(const UE * ue);
+    static vector<Intervention *> getInterventions(const UE * ue);
 };
 
 

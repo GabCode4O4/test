@@ -4,7 +4,9 @@
 #include <enseignant.hpp>
 #include <ue.hpp>
 
-std::vector<Intervention *> Intervention::interventions = std::vector<Intervention *>();
+using namespace std;
+
+vector<Intervention *> Intervention::interventions = vector<Intervention *>();
 
 Intervention::Intervention(const Enseignant * p_intervenant, const UE * ue, float p_tp, float p_td, float p_cours) {
     intervenant = p_intervenant;
@@ -19,9 +21,9 @@ float Intervention::getETD() const {
     return nb_heure_cours * COEF_COURS + nb_heure_td * COEF_TD + nb_heure_tp * COEF_TP; // A MODIFIER
 }
 
-std::vector<Intervention *> Intervention::getInterventions(const Enseignant * e) {
+vector<Intervention *> Intervention::getInterventions(const Enseignant * e) {
     int id_e = e->getId();
-    std::vector<Intervention *> result;
+    vector<Intervention *> result;
     for (Intervention * i: interventions) {
         if (i->getIntervenant()->getId() == id_e)
             result.push_back(i);
@@ -30,10 +32,10 @@ std::vector<Intervention *> Intervention::getInterventions(const Enseignant * e)
     return result;
 }
 
-std::vector<Intervention *> Intervention::getInterventions(const UE * ue) {
+vector<Intervention *> Intervention::getInterventions(const UE * ue) {
 
     int id_ue = ue->getId();
-    std::vector<Intervention *> result;
+    vector<Intervention *> result;
     for (Intervention * i: interventions) {
         if (i->getUE()->getId() == id_ue)
             result.push_back(i);
