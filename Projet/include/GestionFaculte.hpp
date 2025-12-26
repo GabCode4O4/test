@@ -61,8 +61,8 @@ public:
     GestionFaculte();
     ~GestionFaculte();
 
-    void sauvegarderTout();
-    void chargerTout();
+    void sauvegarder();
+    void charger();
 
     void demo();
     void menuPrincipal();

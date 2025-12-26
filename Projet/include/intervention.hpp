@@ -22,7 +22,7 @@ private:
 
 public:
     Intervention(const Enseignant * p_intervenant, const UE * ue, float p_tp, float p_td, float p_cours);
-    ~Intervention() = default;
+    ~Intervention();
 
     inline const Enseignant * getIntervenant() { return intervenant; }
     inline const UE * getUE() { return ue; }
@@ -31,6 +31,11 @@ public:
     static vector<Intervention *> getInterventions(const Enseignant * e);
     // return un vector contenant les intervention faites dans l'ue
     static vector<Intervention *> getInterventions(const UE * ue);
+    inline float getHCours() const { return nb_heure_cours; }
+    inline float getHTD() const { return nb_heure_td; }
+    inline float getHTP() const { return nb_heure_tp; }
+    static const vector<Intervention*>& getAllInterventions() { return interventions; }
+   
 };
 
 

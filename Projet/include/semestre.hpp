@@ -33,8 +33,9 @@ public:
     ~Semestre() = default;
 
     void addUE(UE* ue, int nbInscrits);
-    inline const std::vector<dansUE>& getUEs() const { return ue_inscrite; }
+    inline const vector<dansUE>& getUEs() const { return ue_inscrite; }
     inline const string& getNom() const { return nom; }
+    inline int getId() const { return id; }
 
     float getCoutHoraires() const;
 };

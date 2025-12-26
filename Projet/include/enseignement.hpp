@@ -28,6 +28,7 @@ public:
     float getNbHeure() const;
     int getNbGroupe() const;
     int getId() const;
+    inline enseignement_t getType() const { return type; }
     void setUE(const UE *p_ue);
 
     string toString() const;

@@ -1,5 +1,5 @@
 #include <intervention.hpp>
-
+#include <algorithm>
 
 #include <enseignant.hpp>
 #include <ue.hpp>
@@ -15,6 +15,21 @@ Intervention::Intervention(const Enseignant * p_intervenant, const UE * ue, floa
     nb_heure_td = p_td;
     nb_heure_cours = p_cours;
     interventions.push_back(this);
+}
+Intervention::~Intervention() {
+    // On cherche l'objet courant (this) dans le vecteur statique
+    auto it = find(interventions.begin(), interventions.end(), this);
+    
+    // Si on le trouve, on le retire de la liste pour ne pas garder de pointeur invalide
+    if (it != interventions.end()) {
+        interventions.erase(it);
+    }
+}
+
+void Intervention::resetInterventions() {
+    while (!interventions.empty()) {
+        delete interventions.back();
+    }
 }
 
 float Intervention::getETD() const {

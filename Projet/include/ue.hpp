@@ -21,26 +21,28 @@ class UE
 {
 private:
     int id;
-    std::string nom;
+    string nom;
     const Enseignant *responsable;
-    std::vector<Enseignement *> enseignements;
+    vector<Enseignement *> enseignements;
     const Departement * departement;
     int nb_inscrits = 0;
 public:
     UE() = default;
-    // le département est automatiquement celui de l'enseignant responsable
-    UE(const std::string& p_nom, const Enseignant *p_responsable );
-    UE(const std::string& p_nom, const Departement * p_departement, const Enseignant *p_responsable);
+    
+    UE(const string& p_nom, const Enseignant *p_responsable );
+    UE(const string& p_nom, const Departement * p_departement, const Enseignant *p_responsable);
     ~UE() = default;
 
-    // rajoute un enseignement à l'ue
     void addEnseignement(Enseignement * p_enseignement);
+    inline const vector<Enseignement*>& getEnseignements() const { return enseignements; }
     float getETD() const;
 
-    // return le département qui gère l'ue
     const Departement *getDepartement() const ;
-    const std::string& getNom() const;
+    inline const Enseignant* getResponsable() const { return responsable; }
+    const string& getNom() const;
     inline int getId() const { return id; }
+    inline const std::vector<Enseignement*>& getEnseignements() const { return enseignements; }
+    inline const Enseignant* getResponsable() const { return responsable; }
 
 
     inline void setDepartement(const Departement * p_departement) { departement = p_departement; }

@@ -49,156 +49,15 @@ GestionFaculte::~GestionFaculte() {
     departements.clear();
 }
 
-void GestionFaculte::sauvegarderTout() {
-    afficherTitre("SAUVEGARDE EN COURS");
-    
-// 1. Départements
-    ofstream fDept("departements.txt");
-    if(fDept.is_open()) {
-        for(auto* d : departements) {
-            int respId = (d->getResponsable()) ? d->getResponsable()->getId() : -1;
-            fDept << d->getId() << ";" << d->getNom() << ";" << respId << endl; // Ajout respId
-        }
-    }
+void GestionFaculte::sauvegarder() {
 
-    // 2. Enseignants
-    ofstream fEns("enseignants.txt");
-    if(fEns.is_open()) {
-        for(auto* e : enseignants) {
-            int type = (dynamic_cast<EnseignantChercheur*>(e)) ? 1 : 2;
-            int deptId = (e->getDepartement()) ? e->getDepartement()->getId() : -1;
-            fEns << e->getId() << ";" << type << ";" << e->getNom() << ";" << e->getPrenom() << ";" << e->getAdresse() << ";" << deptId << endl;
-        }
-    }
-
-    // 3. UEs
-    ofstream fUE("ues.txt");
-    if(fUE.is_open()) {
-        for(auto* u : ues) {
-            int deptId = (u->getDepartement()) ? u->getDepartement()->getId() : -1;
-            fUE << u->getId() << ";" << u->getNom() << ";" << deptId << endl;
-        }
-    }
-
-    // 4. Diplômes
-    ofstream fDip("diplomes.txt");
-    if(fDip.is_open()) {
-        for(auto* d : diplomes) {
-            fDip << d->getNom() << endl;
-        }
-    }
-
-    cout << "✓ Données sauvegardees." << endl;
 }
+void GestionFaculte::charger() {
 
-void GestionFaculte::chargerTout() {
-    // Réinitialisation
-    departements.clear(); enseignants.clear(); ues.clear(); diplomes.clear();
-    mapDept.clear(); mapEns.clear(); mapUE.clear();
-
-    afficherTitre("CHARGEMENT DES DONNEES");
-    string ligne;
-    map<int, int> mapDeptRespTemp;
-
-    // 1. Dept
-    ifstream fDept("departements.txt");
-    if(fDept.is_open()) {
-        while(getline(fDept, ligne)) {
-            if(ligne.empty() || ligne == "\r") continue; 
-            try {
-               stringstream ss(ligne);
-                string sId, sNom, sRespId;
-                getline(ss, sId, ';'); getline(ss, sNom, ';'); getline(ss, sRespId, ';'); // Lecture sRespId
-                Departement* d = new Departement(sNom);
-                departements.push_back(d);
-                mapDept[stoi(sId)] = d;
-                if(!sRespId.empty()) mapDeptRespTemp[stoi(sId)] = stoi(sRespId);
-            } catch(...) {}
-        }
-    }
-
-// 2. Enseignants
-    ifstream fEns("enseignants.txt");
-    if(fEns.is_open()) {
-        while(getline(fEns, ligne)) {
-            if(ligne.empty() || ligne == "\r") continue;
-            try {
-                stringstream ss(ligne);
-                string sId, sType, sNom, sPrenom, sAdresse, sDeptId;
-                getline(ss, sId, ';'); getline(ss, sType, ';'); getline(ss, sNom, ';'); getline(ss, sPrenom, ';'); getline(ss, sAdresse, ';'); getline(ss, sDeptId, ';');
-                
-                Enseignant* e = (stoi(sType) == 1) ? (Enseignant*)new EnseignantChercheur(sNom, sPrenom, sAdresse) : (Enseignant*)new AutreEnseignant(sNom, sPrenom, sAdresse);
-                enseignants.push_back(e);
-                mapEns[stoi(sId)] = e;
-                
-                int dId = stoi(sDeptId);
-                if(mapDept.count(dId)) mapDept[dId]->addEnseignant(e);
-            } catch(...) {}
-        }
-
-        // Lier les responsables aux départements maintenant que les enseignants sont chargés
-        for(auto const& entry : mapDeptRespTemp) {
-            int deptId = entry.first;
-            int respId = entry.second;
-            
-            if(respId != -1 && mapDept.count(deptId) && mapEns.count(respId)) {
-                mapDept[deptId]->setResponsable(mapEns[respId]);
-            }
-        }
-    }
-
-// 3. UEs
-    ifstream fUE("ues.txt");
-    if(fUE.is_open()) {
-        while(getline(fUE, ligne)) {
-            if(ligne.empty() || ligne == "\r") continue;
-            try {
-                stringstream ss(ligne);
-                string sId, sNom, sDeptId;
-                getline(ss, sId, ';'); getline(ss, sNom, ';'); getline(ss, sDeptId, ';');
-                
-                // Responsable par défaut (le premier prof trouvé)
-                Enseignant* resp = (!enseignants.empty()) ? enseignants[0] : nullptr;
-                
-                // Retrouver le département d'origine via l'ID sauvegardé
-                Departement* dept = nullptr;
-                if(!sDeptId.empty() && mapDept.count(stoi(sDeptId))) {
-                    dept = mapDept[stoi(sDeptId)];
-                }
-
-                if(resp) {
-                    UE* ue = nullptr;
-                    
-                    if(dept) {
-                         ue = new UE(sNom, dept, resp);
-                    } else {
-                         ue = new UE(sNom, resp); 
-                    }
-
-                    ues.push_back(ue);
-                    mapUE[stoi(sId)] = ue;
-
-                    if(ue->getDepartement()) {
-                        const_cast<Departement*>(ue->getDepartement())->addUE(ue);
-                    }
-                }
-            } catch(...) {}
-        }
-    }
-    
-    // 4. Diplômes
-    ifstream fDip("diplomes.txt");
-    if(fDip.is_open()) {
-        while(getline(fDip, ligne)) {
-            if(!ligne.empty() && ligne != "\r") diplomes.push_back(new Diplome(ligne));
-        }
-    }
-
-    cout << "Donnees chargees avec succes." << endl;
 }
 
 void GestionFaculte::demo() {
-    afficherTitre("INITIALISATION DE LA DÉMONSTRATION");
+    afficherTitre("INITIALISATION DE LA DEMONSTRATION");
 
     // 1. Création des Départements
     Departement* deptInfo = new Departement("Informatique");
@@ -364,8 +223,8 @@ void GestionFaculte::menuPrincipal() {
             case 4: menuListes(); break;
             case 5: menuCalculs(); break;
             case 7: demo(); break;
-            case 8: sauvegarderTout(); break;
-            case 9: chargerTout(); break;
+            case 8: sauvegarder(); break;
+            case 9: charger(); break;
             case 0: cout << "Au revoir." << endl; break;
             default: cout << "Choix invalide." << endl;
         }
