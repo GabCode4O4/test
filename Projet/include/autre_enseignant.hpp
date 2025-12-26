@@ -5,6 +5,12 @@
 #include "enseignant.hpp"
 #include "define.hpp"
 
+/*
+* Classe AutreEnseignant
+* Représente un enseignant de type PRAG ou PRCE
+* Hérite de la classe Enseignant
+*/
+
 class AutreEnseignant : public Enseignant
 {
 public:

@@ -12,9 +12,11 @@
 using namespace std;
 
 /*
-* Possède un nom, un enseignant, des enseignements, un 
-* l'enseignant est le responsable de l'ue
-* les enseignement peuvent etre de 3 type et constituent les TP/TD/COURS qui composent l'ue
+* Classe UE
+* Représente une Unité d'Enseignement (UE) universitaire
+* Contient des enseignements et un responsable
+* Appartient à un département
+
 */
 
 class UE
@@ -27,24 +29,28 @@ private:
     const Departement * departement;
     int nb_inscrits = 0;
 public:
+
     UE() = default;
-    
     UE(const string& p_nom, const Enseignant *p_responsable );
     UE(const string& p_nom, const Departement * p_departement, const Enseignant *p_responsable);
     ~UE() = default;
 
-    void addEnseignement(Enseignement * p_enseignement);
-    inline const vector<Enseignement*>& getEnseignements() const { return enseignements; }
-    float getETD() const;
-
-    const Departement *getDepartement() const ;
-    inline const Enseignant* getResponsable() const { return responsable; }
+    // Getters
     const string& getNom() const;
-    inline int getId() const { return id; }
-
-    inline void setDepartement(const Departement * p_departement) { departement = p_departement; }
-    void ajouterInscrits(int nombre); 
+    float getETD() const;
     int getNbTotalInscrits() const;
+    const Departement *getDepartement() const ;
+    inline const vector<Enseignement*>& getEnseignements() const { return enseignements; }
+    inline const Enseignant* getResponsable() const { return responsable; }
+    inline int getId() const { return id; }
+    
+    // Setters
+    inline void setDepartement(const Departement * p_departement) { departement = p_departement; }
+    
+    // Ajoute un enseignement à l'UE
+    void addEnseignement(Enseignement * p_enseignement);
+    // Ajoute des inscrits à l'UE
+    void ajouterInscrits(int nombre); 
 
     string toString() const;
     friend ostream& operator<<(ostream& os, const UE& ue); 

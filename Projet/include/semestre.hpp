@@ -5,15 +5,19 @@
 #include <string>
 #include <vector>
 #include "ue.hpp" 
+#include "module.hpp"
 
 using namespace std;
 
 class Diplome;
 
-struct dansUE {
-    UE* ue;
-    int nbInscrits;
-};
+
+/*
+* Classe Semestre
+* Représente un semestre d'un diplôme universitaire
+* Contient plusieurs UEs avec le nombre d'inscrits pour chaque UE
+* Les semestres sont créés et gérés par la classe Diplome
+*/
 
 class Semestre
 {
@@ -22,7 +26,7 @@ private:
     int id;
     string nom;
     Diplome * diplome;
-    vector<dansUE> ue_inscrite; 
+    vector<Module> modules; 
 
     // Pour que les constructeurs soient accessibles uniquement par Diplome
     explicit Semestre(Diplome * p_diplome, const string& p_nom); 
@@ -31,13 +35,15 @@ private:
 
 public:
     ~Semestre() = default;
-
-    void addUE(UE* ue, int nbInscrits);
-    inline const vector<dansUE>& getUEs() const { return ue_inscrite; }
+    
+    // Getters
+    inline const vector<Module>& getModules() const { return modules; }
     inline const string& getNom() const { return nom; }
     inline int getId() const { return id; }
-
     float getCoutHoraires() const;
+
+    // Ajoute une UE avec le nombre d'inscrits
+    void addUE(UE* ue, int nbInscrits);
 };
 
 #endif

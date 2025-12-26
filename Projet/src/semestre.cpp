@@ -17,22 +17,20 @@ Semestre::Semestre(Diplome * p_diplome) : diplome(p_diplome)
 }
 
 void Semestre::addUE(UE* ue, int nbInscrits) {
-    dansUE lien;
-    lien.ue = ue;
-    lien.nbInscrits = nbInscrits;
-    ue_inscrite.push_back(lien);
+    Module module(ue, nbInscrits);
+    modules.push_back(module);
     ue->ajouterInscrits(nbInscrits);
 }
 
 float Semestre::getCoutHoraires() const {
     float cout_total = 0.0f;
-    
-    for (const auto& lien : ue_inscrite) {
-        float coutUE = lien.ue->getETD();
-        int totalInscritsUE = lien.ue->getNbTotalInscrits();
-        
+
+    for (const auto& m : modules) {
+        float coutUE = m.getUE()->getETD();
+        int totalInscritsUE = m.getUE()->getNbTotalInscrits();
+
         if (totalInscritsUE > 0) {
-            float ratio = (float)lien.nbInscrits / (float)totalInscritsUE;
+            float ratio = (float)m.getNbInscrits() / (float)totalInscritsUE;
             cout_total += coutUE * ratio;
         }
     }

@@ -1,5 +1,5 @@
 #include "departement.hpp"
-#include "enseignant.hpp" // Nécessaire pour appeler les méthodes de Enseignant
+#include "enseignant.hpp" 
 #include "ue.hpp"
 #include <iostream>
 

@@ -5,6 +5,13 @@
 #include "enseignant.hpp"
 #include "define.hpp"
 
+/*
+* Classe EnseignantChercheur
+* Représente un enseignant-chercheur de type 
+* Hérite de la classe Enseignant
+* ETDMax = 192 heures
+*/
+
 class EnseignantChercheur : public Enseignant
 {
 public:

@@ -33,15 +33,12 @@ GestionFaculte::~GestionFaculte() {
         }
     }
     enseignants.clear();
-
-    // 4. Suppression des Départements
     for (auto* d : departements) {
         delete d;
     }
     departements.clear();
 }
 
-// Helper pour découper les strings
 vector<string> split(const string& s, char delimiter) {
     vector<string> tokens;
     string token;
@@ -70,7 +67,7 @@ void GestionFaculte::toutEffacer() {
 void GestionFaculte::sauvegarder() {
     ofstream file("sauvegarde_faculte.txt");
     if (!file.is_open()) {
-        cerr << "Erreur : Impossible de créer le fichier de sauvegarde." << endl;
+        cerr << "Impossible de creer le fichier de sauvegarde." << endl;
         return;
     }
 
@@ -108,9 +105,9 @@ void GestionFaculte::sauvegarder() {
             Semestre* s = d->getSemestre(i);
             file << "SEMESTRE;" << d->getNom() << ";" << s->getNom() << endl;
 
-            for (const auto& lien : s->getUEs()) {
+            for (const auto& lien : s->getModules()) {
                 file << "LIEN_UE;" << d->getNom() << ";" << s->getNom() << ";" 
-                     << lien.ue->getId() << ";" << lien.nbInscrits << endl;
+                     << lien.getUE()->getId() << ";" << lien.getNbInscrits() << endl;
             }
         }
     }
@@ -120,19 +117,17 @@ void GestionFaculte::sauvegarder() {
              << i->getHTP() << ";" << i->getHTD() << ";" << i->getHCours() << endl;
     }
 
-    cout << "Sauvegarde terminee avec succes !" << endl;
+    cout << "Bien sauvegarde" << endl;
     file.close();
 }
 
 void GestionFaculte::charger() {
     ifstream file("sauvegarde_faculte.txt");
     if (!file.is_open()) {
-        cout << "Aucun fichier de sauvegarde trouve." << endl;
+        cout << "Pas de sauvegarde" << endl;
         return;
     }
     toutEffacer(); 
-    cout << "Chargement en cours..." << endl;
-
     string line;
     
     map<int, int> liensDeptResp; 
@@ -177,7 +172,6 @@ void GestionFaculte::charger() {
             int idDept = stoi(data[3]);
             int idResp = stoi(data[4]);
 
-            // On récupère les pointeurs via les maps
             Departement* d = mapDept[idDept];
             Enseignant* r = mapEns[idResp];
 
@@ -250,7 +244,7 @@ void GestionFaculte::charger() {
         }
     }
 
-    cout << "Chargement termine !" << endl;
+    cout <<"Chargement fini"<< endl;
     file.close();
 }
 
@@ -390,7 +384,7 @@ void GestionFaculte::demo() {
     new Intervention(profHopper, ueWeb, 30, 20, 10);
     
     cout << "-> Interventions generees." << endl;
-    cout << "Demonstration chargee avec succes !" << endl;
+    cout << "Demonstration chargee" << endl;
 }
 
 void GestionFaculte::menuPrincipal() {
@@ -444,6 +438,7 @@ void GestionFaculte::menuRessources() {
             case 1: uiCreerDepartement(); break;
             case 2: uiCreerEnseignant(); break;
             case 3: uiCreerUEComplet(); break;
+            case 4: uiNommerResponsableDepartement(); break;
             case 0: break;
         }
     }
@@ -702,7 +697,7 @@ void GestionFaculte::uiNommerResponsableDepartement() {
         if(idx < 0 || idx >= departements.size()) return;
         Departement* d = departements[idx];
 
-        // On suppose que le responsable doit faire partie du département (logique métier standard)
+        // On suppose que le responsable doit faire partie du département
         const auto& profs = d->getEnseignants();
         if(profs.empty()) { cout << "Ce département n'a pas d'enseignants." << endl; return; }
 

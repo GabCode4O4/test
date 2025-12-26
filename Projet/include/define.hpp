@@ -18,4 +18,5 @@ constexpr float COEF_TD = 1.f;
 constexpr float COEF_COURS = 1.5f;
 constexpr float MAX_ETD_AUTRE_ENSEIGNANT = 384.f;
 constexpr float MAX_ETD_ENSEIGNANT_CHERCHEUR = 192.f;
+
 #endif

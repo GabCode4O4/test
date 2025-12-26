@@ -18,6 +18,10 @@
 
 using namespace std;
 
+// Classe GestionFaculte
+// Gère l'ensemble des départements, enseignants, UEs et diplômes
+// Fournit une interface utilisateur pour interagir avec ces entités
+
 class GestionFaculte {
 private:
     vector<Departement*> departements;
