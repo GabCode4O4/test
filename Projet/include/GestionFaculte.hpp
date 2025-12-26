@@ -20,40 +20,40 @@ using namespace std;
 
 class GestionFaculte {
 private:
-    std::vector<Departement*> departements;
-    std::vector<Enseignant*> enseignants;
-    std::vector<UE*> ues;
-    std::vector<Diplome*> diplomes;
+    vector<Departement*> departements;
+    vector<Enseignant*> enseignants;
+    vector<UE*> ues;
+    vector<Diplome*> diplomes;
 
     // Maps pour la reconstruction des liens lors du chargement
-    std::map<int, Departement*> mapDept;
-    std::map<int, Enseignant*> mapEns;
-    std::map<int, UE*> mapUE;
+    map<int, Departement*> mapDept;
+    map<int, Enseignant*> mapEns;
+    map<int, UE*> mapUE;
 
     // Utilitaires internes
     void viderBuffer();
-    void afficherTitre(const std::string& titre);
+    void afficherTitre(const string& titre);
 
     // Template d'affichage
     template<typename T>
-    void afficherListeGenerique(const std::string& titre, const std::vector<T*>& liste, std::function<bool(const T*)> filtre = nullptr) {
+    void afficherListeGenerique(const string& titre, const vector<T*>& liste, function<bool(const T*)> filtre = nullptr) {
         afficherTitre(titre);
         if(liste.empty()) {
-            std::cout << "  (Liste vide)" << std::endl;
+            cout << "  (Liste vide)" << endl;
             return;
         }
 
         bool elementTrouve = false;
         for(const auto* elem : liste) {
             if(!filtre || filtre(elem)) {
-                std::cout << *elem << std::endl;
-                std::cout << "-----------------------------------" << std::endl;
+                cout << *elem << endl;
+                cout << "-----------------------------------" << endl;
                 elementTrouve = true;
             }
         }
 
         if(!elementTrouve && filtre) {
-            std::cout << "  (Aucun élément ne correspond au filtre)" << std::endl;
+            cout << "  (Aucun élément ne correspond au filtre)" << endl;
         }
     }
 
@@ -83,6 +83,7 @@ public:
     void uiCalculChargeEns();
     void uiCalculCoutDiplome();
     void uiCalculTauxEncadrement();
+    void uiNommerResponsableDepartement();
 };
 
 #endif

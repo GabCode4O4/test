@@ -52,10 +52,13 @@ GestionFaculte::~GestionFaculte() {
 void GestionFaculte::sauvegarderTout() {
     afficherTitre("SAUVEGARDE EN COURS");
     
-    // 1. Départements
+// 1. Départements
     ofstream fDept("departements.txt");
     if(fDept.is_open()) {
-        for(auto* d : departements) fDept << d->getId() << ";" << d->getNom() << endl;
+        for(auto* d : departements) {
+            int respId = (d->getResponsable()) ? d->getResponsable()->getId() : -1;
+            fDept << d->getId() << ";" << d->getNom() << ";" << respId << endl; // Ajout respId
+        }
     }
 
     // 2. Enseignants
@@ -95,6 +98,7 @@ void GestionFaculte::chargerTout() {
 
     afficherTitre("CHARGEMENT DES DONNEES");
     string ligne;
+    map<int, int> mapDeptRespTemp;
 
     // 1. Dept
     ifstream fDept("departements.txt");
@@ -102,17 +106,18 @@ void GestionFaculte::chargerTout() {
         while(getline(fDept, ligne)) {
             if(ligne.empty() || ligne == "\r") continue; 
             try {
-                stringstream ss(ligne);
-                string sId, sNom;
-                getline(ss, sId, ';'); getline(ss, sNom, ';');
+               stringstream ss(ligne);
+                string sId, sNom, sRespId;
+                getline(ss, sId, ';'); getline(ss, sNom, ';'); getline(ss, sRespId, ';'); // Lecture sRespId
                 Departement* d = new Departement(sNom);
                 departements.push_back(d);
                 mapDept[stoi(sId)] = d;
+                if(!sRespId.empty()) mapDeptRespTemp[stoi(sId)] = stoi(sRespId);
             } catch(...) {}
         }
     }
 
-    // 2. Enseignants
+// 2. Enseignants
     ifstream fEns("enseignants.txt");
     if(fEns.is_open()) {
         while(getline(fEns, ligne)) {
@@ -130,9 +135,19 @@ void GestionFaculte::chargerTout() {
                 if(mapDept.count(dId)) mapDept[dId]->addEnseignant(e);
             } catch(...) {}
         }
+
+        // Lier les responsables aux départements maintenant que les enseignants sont chargés
+        for(auto const& entry : mapDeptRespTemp) {
+            int deptId = entry.first;
+            int respId = entry.second;
+            
+            if(respId != -1 && mapDept.count(deptId) && mapEns.count(respId)) {
+                mapDept[deptId]->setResponsable(mapEns[respId]);
+            }
+        }
     }
 
-    // 3. UEs
+// 3. UEs
     ifstream fUE("ues.txt");
     if(fUE.is_open()) {
         while(getline(fUE, ligne)) {
@@ -142,12 +157,30 @@ void GestionFaculte::chargerTout() {
                 string sId, sNom, sDeptId;
                 getline(ss, sId, ';'); getline(ss, sNom, ';'); getline(ss, sDeptId, ';');
                 
-                // Responsable par défaut si non trouvé (simplification pour l'exercice)
+                // Responsable par défaut (le premier prof trouvé)
                 Enseignant* resp = (!enseignants.empty()) ? enseignants[0] : nullptr;
+                
+                // Retrouver le département d'origine via l'ID sauvegardé
+                Departement* dept = nullptr;
+                if(!sDeptId.empty() && mapDept.count(stoi(sDeptId))) {
+                    dept = mapDept[stoi(sDeptId)];
+                }
+
                 if(resp) {
-                    UE* ue = new UE(sNom, resp);
+                    UE* ue = nullptr;
+                    
+                    if(dept) {
+                         ue = new UE(sNom, dept, resp);
+                    } else {
+                         ue = new UE(sNom, resp); 
+                    }
+
                     ues.push_back(ue);
                     mapUE[stoi(sId)] = ue;
+
+                    if(ue->getDepartement()) {
+                        const_cast<Departement*>(ue->getDepartement())->addUE(ue);
+                    }
                 }
             } catch(...) {}
         }
@@ -161,7 +194,7 @@ void GestionFaculte::chargerTout() {
         }
     }
 
-    cout << "✓ Données chargées avec succès." << endl;
+    cout << "Donnees chargees avec succes." << endl;
 }
 
 void GestionFaculte::demo() {
@@ -346,6 +379,7 @@ void GestionFaculte::menuRessources() {
         cout << "1. Creer un Departement" << endl;
         cout << "2. Creer un Enseignant" << endl;
         cout << "3. Creer une UE (et ses enseignements)" << endl;
+        cout << "4. Nommer un Responsable de Departement" << endl;
         cout << "0. Retour" << endl;
         cout << "Choix : "; cin >> choix; viderBuffer();
         
@@ -415,7 +449,7 @@ void GestionFaculte::menuCalculs() {
         afficherTitre("CALCULS & STATS");
         cout << "1. Charges Enseignants (Service vs Obligations)" << endl;
         cout << "2. Couts des Diplomes" << endl;
-        cout << "3. Taux d'encadrement des Departements" << endl;
+        cout << "3. Charges horaires et Taux d'encadrement" << endl;
         cout << "0. Retour" << endl;
         cout << "Choix : "; cin >> choix; viderBuffer();
         
@@ -456,20 +490,29 @@ void GestionFaculte::uiCreerEnseignant() {
 }
 
 void GestionFaculte::uiCreerUEComplet() {
-    if(enseignants.empty()) { cout << "Erreur: Il faut des enseignants (responsables)." << endl; return; }
+    if(enseignants.empty() || departements.empty()) { 
+        cout << "Erreur: Il faut des enseignants et des departements." << endl; return; 
+    }
 
     string nom;
     cout << "Nom de l'UE : "; getline(cin, nom);
     
-    cout << "Responsable de l'UE : " << endl;
+    // 1. Choix du Responsable (n'importe quel enseignant)
+    cout << "Enseignant Responsable de l'UE : " << endl;
     for(size_t i=0; i<enseignants.size(); ++i) cout << i << ". " << enseignants[i]->getNom() << endl;
-    int idx; cin >> idx; viderBuffer();
-    
-    if(idx < 0 || idx >= enseignants.size()) return;
+    int idxEns; cin >> idxEns; viderBuffer();
+    if(idxEns < 0 || idxEns >= enseignants.size()) return;
 
-    UE* ue = new UE(nom, enseignants[idx]);
+    // 2. Choix du Département de rattachement (Indépendant du prof)
+    cout << "Departement porteur de l'UE : " << endl;
+    for(size_t i=0; i<departements.size(); ++i) cout << i << ". " << departements[i]->getNom() << endl;
+    int idxDept; cin >> idxDept; viderBuffer();
+    if(idxDept < 0 || idxDept >= departements.size()) return;
+
+    // Utilisation du constructeur spécifique (Nom, Dept, Responsable)
+    UE* ue = new UE(nom, departements[idxDept], enseignants[idxEns]);
     
-    // Ajout des volumes horaires (Composition)
+    // Ajout des volumes horaires (Reste inchangé)
     char continuer = 'o';
     while(continuer == 'o') {
         cout << "Ajouter un enseignement (Cours/TD/TP) ? (o/n) : "; cin >> continuer;
@@ -484,9 +527,10 @@ void GestionFaculte::uiCreerUEComplet() {
         ue->addEnseignement(new Enseignement(groupes, heures, typeEnum));
     }
 
+    // Important : Ajouter l'UE au département choisi manuellement
     const_cast<Departement*>(ue->getDepartement())->addUE(ue);
     ues.push_back(ue);
-    cout << "UE créée." << endl;
+    cout << "UE créée et affectée au département " << ue->getDepartement()->getNom() << "." << endl;
 }
 
 void GestionFaculte::uiCreerDiplome() {
@@ -575,7 +619,44 @@ void GestionFaculte::uiCalculCoutDiplome() {
 }
 
 void GestionFaculte::uiCalculTauxEncadrement() {
+    afficherTitre("CHARGES ET TAUX D'ENCADREMENT");
     for(const auto* d : departements) {
-        cout << d->getNom() << " : " << fixed << setprecision(2) << (d->getTauxEncadrement()*100) << "%" << endl;
+        float besoin = d->getHeuresBesoin();
+        float dispo = d->getHeuresDispo();
+        float taux = (besoin > 0) ? (dispo / besoin * 100) : 0;
+        
+        cout << "DEPT: " << d->getNom() << endl;
+        cout << "  > Charge (Besoin) : " << fixed << setprecision(1) << besoin << " h ETD" << endl;
+        cout << "  > Ressources (Dispo) : " << dispo << " h ETD" << endl;
+        cout << "  > Taux couverture : " << setprecision(2) << taux << " %" << endl;
+        cout << "-----------------------------------" << endl;
     }
 }
+    
+void GestionFaculte::uiNommerResponsableDepartement() {
+    if(departements.empty()) { cout << "Aucun département." << endl; return; }
+
+        cout << "Choisir le departement :" << endl;
+        for(size_t i=0; i<departements.size(); ++i) 
+            cout << i << ". " << departements[i]->getNom() << " (Resp: " 
+                << (departements[i]->getResponsable() ? departements[i]->getResponsable()->getNom() : "Aucun") << ")" << endl;
+        
+        int idx; cin >> idx; viderBuffer();
+        if(idx < 0 || idx >= departements.size()) return;
+        Departement* d = departements[idx];
+
+        // On suppose que le responsable doit faire partie du département (logique métier standard)
+        const auto& profs = d->getEnseignants();
+        if(profs.empty()) { cout << "Ce département n'a pas d'enseignants." << endl; return; }
+
+        cout << "Choisir le nouveau responsable parmi les membres :" << endl;
+        for(size_t i=0; i<profs.size(); ++i) 
+            cout << i << ". " << profs[i]->getNom() << endl;
+
+        int idxProf; cin >> idxProf; viderBuffer();
+        if(idxProf >= 0 && idxProf < profs.size()) {
+            d->setResponsable(profs[idxProf]);
+            cout << "Responsable mis a jour." << endl;
+        }
+    }
+

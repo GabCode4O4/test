@@ -38,20 +38,25 @@ const vector<UE *>& Departement::getUEs() const {
     return ue_departement;
 }
 
-float Departement::getTauxEncadrement() const {
-    float heure_dispo = 0.0;
-    float heure_besoin = 0.0;
-
+float Departement::getHeuresDispo() const {
+    float total = 0.0;
     for (const auto* e : enseignants) {
-        heure_dispo += e->getETDMax(); 
+        total += e->getETDMax();
     }
-
+    return total;
+}
+float Departement::getHeuresBesoin() const {
+    float total = 0.0;
     for (const auto* u : ue_departement) {
-        heure_besoin += u->getETD();
+        total += u->getETD();
     }
+    return total;
+}
 
-    if (heure_besoin == 0) return 0.0;
-    return heure_dispo / heure_besoin;
+float Departement::getTauxEncadrement() const {
+    float h_besoin = getHeuresBesoin();
+    if (h_besoin == 0) return 0.0;
+    return getHeuresDispo() / h_besoin;
 }
 
 string Departement::toString() const {

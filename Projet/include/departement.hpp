@@ -27,6 +27,7 @@ public:
     inline const string& getNom() const { return nom; }
     inline const vector<Enseignant*>& getEnseignants() const { return enseignants; }
     inline const Enseignant* getResponsable() const { return responsable; }
+    
     inline void setResponsable(Enseignant* p_responsable) { responsable = p_responsable; }
 
 
@@ -36,6 +37,8 @@ public:
     void addUE(UE * p_ue);
     const vector<UE *>& getUEs() const;
     
+    float getHeuresDispo() const;
+    float getHeuresBesoin() const;
     float getTauxEncadrement() const;
     string toString() const;
     friend ostream& operator<<(ostream& os, const Departement& d);
