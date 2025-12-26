@@ -41,9 +41,6 @@ public:
     inline const Enseignant* getResponsable() const { return responsable; }
     const string& getNom() const;
     inline int getId() const { return id; }
-    inline const std::vector<Enseignement*>& getEnseignements() const { return enseignements; }
-    inline const Enseignant* getResponsable() const { return responsable; }
-
 
     inline void setDepartement(const Departement * p_departement) { departement = p_departement; }
     void ajouterInscrits(int nombre); 

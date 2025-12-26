@@ -1,9 +1,7 @@
 #include "GestionFaculte.hpp"
-#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <limits>
-#include <algorithm>
 #include <iomanip>
 
 using namespace std;
@@ -21,20 +19,14 @@ void GestionFaculte::afficherTitre(const string& titre) {
 GestionFaculte::GestionFaculte() {}
 
 GestionFaculte::~GestionFaculte() {
-    // 1. Suppression des UEs
     for (auto* u : ues) {
         delete u;
     }
     ues.clear();
-
-    // 2. Suppression des Diplômes
     for (auto* d : diplomes) {
         delete d;
     }
     diplomes.clear();
-
-    // 3. Suppression des Enseignants non rattachés à un département
-    // Ceux rattachés seront supprimés par le destructeur de leur département
     for (auto* e : enseignants) {
         if (e->getDepartement() == nullptr) {
             delete e;
@@ -49,11 +41,217 @@ GestionFaculte::~GestionFaculte() {
     departements.clear();
 }
 
-void GestionFaculte::sauvegarder() {
-
+// Helper pour découper les strings
+vector<string> split(const string& s, char delimiter) {
+    vector<string> tokens;
+    string token;
+    istringstream tokenStream(s);
+    while (getline(tokenStream, token, delimiter)) {
+        tokens.push_back(token);
+    }
+    return tokens;
 }
-void GestionFaculte::charger() {
 
+void GestionFaculte::toutEffacer() {
+    for(auto* u : ues) delete u; ues.clear();
+    for(auto* d : diplomes) delete d; diplomes.clear();
+    {
+       Intervention::resetInterventions();
+    }
+
+    for(auto* e : enseignants) if(e->getDepartement() == nullptr) delete e; 
+    enseignants.clear();
+    for(auto* d : departements) delete d; departements.clear();
+    mapDept.clear();
+    mapEns.clear();
+    mapUE.clear();
+}
+
+void GestionFaculte::sauvegarder() {
+    ofstream file("sauvegarde_faculte.txt");
+    if (!file.is_open()) {
+        cerr << "Erreur : Impossible de créer le fichier de sauvegarde." << endl;
+        return;
+    }
+
+    for (const auto* d : departements) {
+        int idResp = (d->getResponsable()) ? d->getResponsable()->getId() : -1;
+        file << "DEPT;" << d->getId() << ";" << d->getNom() << ";" << idResp << endl;
+    }
+
+    for (const auto* e : enseignants) {
+        int type = (dynamic_cast<const EnseignantChercheur*>(e)) ? 1 : 2;
+        int idDept = (e->getDepartement()) ? e->getDepartement()->getId() : -1;
+        
+        file << "ENS;" << e->getId() << ";" << type << ";" 
+             << e->getNom() << ";" << e->getPrenom() << ";" 
+             << e->getAdresse() << ";" << idDept << endl;
+    }
+
+    for (const auto* u : ues) {
+        int idDept = (u->getDepartement()) ? u->getDepartement()->getId() : -1;
+        int idResp = (u->getResponsable()) ? u->getResponsable()->getId() : -1;
+
+        file << "UE;" << u->getId() << ";" << u->getNom() << ";" 
+             << idDept << ";" << idResp << endl;
+
+        for (const auto* ens : u->getEnseignements()) {
+            file << "COURS_UE;" << u->getId() << ";" 
+                 << ens->getNbGroupe() << ";" << ens->getNbHeure() << ";" 
+                 << (int)ens->getType() << endl;
+        }
+    }
+    for (const auto* d : diplomes) {
+        file << "DIPLOME;" << d->getNom() << endl;
+        
+        for (int i = 1; i <= d->getNbSemestres(); ++i) {
+            Semestre* s = d->getSemestre(i);
+            file << "SEMESTRE;" << d->getNom() << ";" << s->getNom() << endl;
+
+            for (const auto& lien : s->getUEs()) {
+                file << "LIEN_UE;" << d->getNom() << ";" << s->getNom() << ";" 
+                     << lien.ue->getId() << ";" << lien.nbInscrits << endl;
+            }
+        }
+    }
+    for (auto* i : Intervention::getAllInterventions()) {
+        file << "INTERVENTION;" << i->getIntervenant()->getId() << ";" 
+             << i->getUE()->getId() << ";" 
+             << i->getHTP() << ";" << i->getHTD() << ";" << i->getHCours() << endl;
+    }
+
+    cout << "Sauvegarde terminee avec succes !" << endl;
+    file.close();
+}
+
+void GestionFaculte::charger() {
+    ifstream file("sauvegarde_faculte.txt");
+    if (!file.is_open()) {
+        cout << "Aucun fichier de sauvegarde trouve." << endl;
+        return;
+    }
+    toutEffacer(); 
+    cout << "Chargement en cours..." << endl;
+
+    string line;
+    
+    map<int, int> liensDeptResp; 
+
+    while (getline(file, line)) {
+        if (line.empty()) continue;
+        vector<string> data = split(line, ';');
+        string type = data[0];
+
+        if (type == "DEPT") {
+            int oldId = stoi(data[1]);
+            string nom = data[2];
+            int idResp = stoi(data[3]);
+
+            Departement* d = new Departement(nom);
+            departements.push_back(d);
+            mapDept[oldId] = d; 
+            
+            if (idResp != -1) liensDeptResp[oldId] = idResp;
+        }
+        else if (type == "ENS") {
+            int oldId = stoi(data[1]);
+            int typeEns = stoi(data[2]);
+            string nom = data[3];
+            string prenom = data[4];
+            string adresse = data[5];
+            int idDept = stoi(data[6]);
+
+            Enseignant* e = nullptr;
+            if (typeEns == 1) e = new EnseignantChercheur(nom, prenom, adresse);
+            else e = new AutreEnseignant(nom, prenom, adresse);
+            
+            enseignants.push_back(e);
+            mapEns[oldId] = e;
+            if (mapDept.find(idDept) != mapDept.end()) {
+                mapDept[idDept]->addEnseignant(e);
+            }
+        }
+        else if (type == "UE") {
+            int oldId = stoi(data[1]);
+            string nom = data[2];
+            int idDept = stoi(data[3]);
+            int idResp = stoi(data[4]);
+
+            // On récupère les pointeurs via les maps
+            Departement* d = mapDept[idDept];
+            Enseignant* r = mapEns[idResp];
+
+            if (d && r) {
+                UE* u = new UE(nom, d, r);
+                const_cast<Departement*>(d)->addUE(u); 
+                ues.push_back(u);
+                mapUE[oldId] = u;
+            }
+        }
+        else if (type == "COURS_UE") {
+            int idUE = stoi(data[1]);
+            int grp = stoi(data[2]);
+            float hrs = stof(data[3]);
+            int t = stoi(data[4]);
+
+            if (mapUE.find(idUE) != mapUE.end()) {
+                mapUE[idUE]->addEnseignement(new Enseignement(grp, hrs, (enseignement_t)t));
+            }
+        }
+        else if (type == "DIPLOME") {
+            diplomes.push_back(new Diplome(data[1]));
+        }
+        else if (type == "SEMESTRE") {
+            string nomDip = data[1];
+            for (auto* d : diplomes) {
+                if (d->getNom() == nomDip) {
+                    d->addSemestre(data[2]);
+                    break;
+                }
+            }
+        }
+        else if (type == "LIEN_UE") {
+            string nomDip = data[1];
+            string nomSem = data[2];
+            int idUE = stoi(data[3]);
+            int nb = stoi(data[4]);
+
+            if (mapUE.find(idUE) != mapUE.end()) {
+                for (auto* d : diplomes) {
+                    if (d->getNom() == nomDip) {
+                         for(int i=1; i<=d->getNbSemestres(); ++i) {
+                             if(d->getSemestre(i)->getNom() == nomSem) {
+                                 d->getSemestre(i)->addUE(mapUE[idUE], nb);
+                                 break;
+                             }
+                         }
+                         break;
+                    }
+                }
+            }
+        }
+        else if (type == "INTERVENTION") {
+            int idEns = stoi(data[1]);
+            int idUE = stoi(data[2]);
+            float htp = stof(data[3]);
+            float htd = stof(data[4]);
+            float hc = stof(data[5]);
+
+            if (mapEns.find(idEns) != mapEns.end() && mapUE.find(idUE) != mapUE.end()) {
+                new Intervention(mapEns[idEns], mapUE[idUE], htp, htd, hc);
+            }
+        }
+    }
+    for (auto const& pair : liensDeptResp) {
+        int oldDeptId = pair.first;
+        int oldRespId = pair.second;
+        if (mapDept[oldDeptId] && mapEns[oldRespId]) {
+            mapDept[oldDeptId]->setResponsable(mapEns[oldRespId]);
+        }
+    }
+
+    cout << "Chargement termine !" << endl;
+    file.close();
 }
 
 void GestionFaculte::demo() {

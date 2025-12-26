@@ -23,7 +23,7 @@ private:
 public:
     Intervention(const Enseignant * p_intervenant, const UE * ue, float p_tp, float p_td, float p_cours);
     ~Intervention();
-
+    static void resetInterventions();
     inline const Enseignant * getIntervenant() { return intervenant; }
     inline const UE * getUE() { return ue; }
     float getETD() const;

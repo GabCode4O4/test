@@ -29,6 +29,7 @@ private:
     map<int, Departement*> mapDept;
     map<int, Enseignant*> mapEns;
     map<int, UE*> mapUE;
+    void toutEffacer();
 
     // Utilitaires internes
     void viderBuffer();
