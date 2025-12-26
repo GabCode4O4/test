@@ -51,7 +51,7 @@ string UE::toString() const {
             "\nNom -> " + nom +
             "\nNombre d'inscrits -> " + to_string(nb_inscrits) +
             "\nResponsable -> " + responsable->getNom() +
-            "\nDepartement gérant -> " + responsable->getDepartement()->getNom() +
+            "\nDepartement gerant -> " + responsable->getDepartement()->getNom() +
             "\nETD -> " + to_string(this->getETD());
 }
 

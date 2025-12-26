@@ -34,6 +34,7 @@ public:
 
     void addUE(UE* ue, int nbInscrits);
     inline const std::vector<dansUE>& getUEs() const { return ue_inscrite; }
+    inline const string& getNom() const { return nom; }
 
     float getCoutHoraires() const;
 };

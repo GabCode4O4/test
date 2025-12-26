@@ -1,3 +1,0 @@
-0;Informatique
-1;Mathématiques
-2;Physique
